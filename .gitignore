@@ -2,3 +2,4 @@
 /packages
 *.user
 */obj
+/.vs
