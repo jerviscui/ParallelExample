@@ -1,41 +1,28 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace Concurrency
 {
-    public class Program
+    class Program
     {
-        /// <summary>
-        /// 打开控制台
-        /// </summary>
-        /// <returns>Boolean.</returns>
-        [DllImport("kernel32.dll")]
-        public static extern Boolean AllocConsole();
-
-        /// <summary>
-        /// 关闭控制台
-        /// </summary>
-        /// <returns>Boolean.</returns>
-        [DllImport("kernel32.dll")]
-        public static extern Boolean FreeConsole();
-
-        //[STAThread]
-        //public static void Main(string[] args)
-        //{
-        //    AllocConsole();
-
-        //    Application.EnableVisualStyles();
-        //    Application.SetCompatibleTextRenderingDefault(false);
-        //    Application.Run();
-            
-        //    FreeConsole();
-        //}
-
-        public static void Exit()
+        static void Main(string[] args)
         {
-            Application.Exit();
+            Console.BufferHeight = 10000;
+            //Trace.Listeners.Clear();
+            Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
+            
+            MainAsync(args).Wait();
+
+            Console.ReadLine();
+        }
+
+        static async Task MainAsync(string[] args)
+        {
+            using (var test = new ParallelForeachAndPartitionerTest())
+            {
+                test.UseParallelOptions();
+            }
         }
     }
 }

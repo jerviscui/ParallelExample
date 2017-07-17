@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 
@@ -32,7 +34,17 @@ namespace Concurrency
 
         public static void WriteLog()
         {
-            File.WriteAllLines(Path.GetFullPath(_fileName), Messages.ToArray());
+            var list = new List<string>();
+            while (!Messages.IsEmpty)
+            {
+                string str;
+                if (Messages.TryDequeue(out str))
+                {
+                    list.Add(str);
+                }
+            }
+
+            File.WriteAllLines(Path.GetFullPath(_fileName), list);
         }
     }
 }
