@@ -92,6 +92,9 @@ namespace Concurrency
             }
         }
 
+        /// <summary>
+        /// 指定最大并行度
+        /// </summary>
         [Fact]
         public void UseParallelOptions()
         {
@@ -100,6 +103,24 @@ namespace Concurrency
             //options.MaxDegreeOfParallelism = -1;
             //Parallel.ForEach(Partitioner.Create(1, 500 * 1000, 500 * 1000 / Environment.ProcessorCount + 1), options, range =>
             Parallel.ForEach(Partitioner.Create(1, 500 * 1000, 500 * 1000 / (Environment.ProcessorCount - 1) + 1), options, range =>
+            {
+                Trace.WriteLine($"range [{range.Item1}, {range.Item2})");
+                for (int i = range.Item1; i < range.Item2; i++)
+                {
+                    Trace.WriteLine(i);
+                }
+            });
+        }
+
+        /// <summary>
+        /// 使用物理内核数量的最大并行度
+        /// </summary>
+        [Fact]
+        public void UseParallelOptionsByPhysicalCores()
+        {
+            var options = new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount };
+            options.MaxDegreeOfParallelism /= 2;
+            Parallel.ForEach(Partitioner.Create(1, 500 * 1000, 500 * 1000 / options.MaxDegreeOfParallelism + 1), options, range =>
             {
                 Trace.WriteLine($"range [{range.Item1}, {range.Item2})");
                 for (int i = range.Item1; i < range.Item2; i++)

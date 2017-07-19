@@ -90,6 +90,7 @@
     <Compile Include="AwaitTest.cs" />
     <Compile Include="BaseTest.cs" />
     <Compile Include="ConsoleTraceListener.cs" />
+    <Compile Include="DisposeAction.cs" />
     <Compile Include="FileTraceListener.cs" />
     <Compile Include="ParallelForeachAndPartitionerTest.cs" />
     <Compile Include="ParallelForeachTest.cs" />

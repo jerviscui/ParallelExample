@@ -12,8 +12,14 @@ namespace Concurrency
             //Trace.Listeners.Clear();
             Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
             
-            MainAsync(args).Wait();
+            //MainAsync(args).Wait();
 
+            using (Disable())
+            {
+                
+            }
+
+            Console.WriteLine(a);
             Console.ReadLine();
         }
 
@@ -23,6 +29,20 @@ namespace Concurrency
             {
                 test.UseParallelOptions();
             }
+        }
+
+        private static int a;
+
+        static IDisposable Disable()
+        {
+            a = 0;
+            return new DisposeAction(() => Enable());
+        }
+
+        static IDisposable Enable()
+        {
+            a = 1;
+            return new DisposeAction(() => Disable());
         }
     }
 }
