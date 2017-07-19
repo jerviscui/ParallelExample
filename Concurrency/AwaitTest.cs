@@ -1,31 +1,44 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace Concurrency
 {
-    public static class AwaitTest
+    public class AwaitTest : BaseTest
     {
-        static async Task MainAsync()
+        /// <summary>
+        /// await 和 没有await时的执行顺序
+        /// </summary>
+        /// <returns>Task.</returns>
+        [Fact]
+        public async Task MainAsync()
         {
+            //期望出现执行结果： run1 run20 run21 
+            //或者：run1 run21 run20 
             await Run1();
+            _task.Wait();
         }
 
-        public static async Task Run1()
+        private Task _task;
+
+        private async Task Run1()
         {
-            var task = Run2();
+            _task = Run2();
 
             Trace.WriteLine("run1");
 
             await Run2();
         }
 
-        public static int Num;
+        private static int _num;
 
-        public static Task Run2()
+        private async Task Run2()
         {
-            var i = Num++;
-            return Task.Run(() => Trace.WriteLine("run2" + i));
+            var i = _num++;
+            await Task.Delay(1000);
+            Trace.WriteLine("run2" + i);
         }
     }
 }

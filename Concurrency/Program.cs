@@ -11,8 +11,8 @@ namespace Concurrency
             Console.BufferHeight = 10000;
             //Trace.Listeners.Clear();
             Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
-            
-            //MainAsync(args).Wait();
+
+            MainAsync(args).Wait();
 
             using (Disable())
             {
@@ -25,9 +25,9 @@ namespace Concurrency
 
         static async Task MainAsync(string[] args)
         {
-            using (var test = new ParallelForeachAndPartitionerTest())
+            using (var test = new AwaitTest())
             {
-                test.UseParallelOptions();
+                await test.MainAsync();
             }
         }
 
