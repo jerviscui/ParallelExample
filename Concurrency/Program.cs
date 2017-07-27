@@ -14,10 +14,10 @@ namespace Concurrency
 
             MainAsync(args).Wait();
 
-            using (Disable())
-            {
+            //using (Disable())
+            //{
                 
-            }
+            //}
 
             Console.WriteLine(a);
             Console.ReadLine();
@@ -25,9 +25,9 @@ namespace Concurrency
 
         static async Task MainAsync(string[] args)
         {
-            using (var test = new AwaitTest())
+            using (var test = new TaskTest())
             {
-                await test.MainAsync();
+                test.UseParallelStracksWindowTest();
             }
         }
 
