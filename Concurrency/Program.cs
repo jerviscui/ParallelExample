@@ -27,7 +27,7 @@ namespace Concurrency
         {
             using (var test = new TaskTest())
             {
-                test.UseParallelStracksWindowTest();
+                await test.CancellationTokenTest();
             }
         }
 
