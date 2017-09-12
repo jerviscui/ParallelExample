@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Security.Permissions;
 
 namespace Concurrency
 {

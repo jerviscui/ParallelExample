@@ -16,7 +16,7 @@ namespace Concurrency
 
             //using (Disable())
             //{
-                
+
             //}
 
             Console.WriteLine(a);
@@ -25,9 +25,9 @@ namespace Concurrency
 
         static async Task MainAsync(string[] args)
         {
-            using (var test = new TaskTest())
+            using (var test = new ParallelCollectionTest())
             {
-                await test.CancellationTokenTest();
+                test.FirstConsumerQueueTest();
             }
         }
 

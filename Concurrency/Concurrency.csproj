@@ -92,6 +92,7 @@
     <Compile Include="ConsoleTraceListener.cs" />
     <Compile Include="DisposeAction.cs" />
     <Compile Include="FileTraceListener.cs" />
+    <Compile Include="ParallelCollectionTest.cs" />
     <Compile Include="ParallelForeachAndPartitionerTest.cs" />
     <Compile Include="ParallelForeachTest.cs" />
     <Compile Include="Program3.cs" />
