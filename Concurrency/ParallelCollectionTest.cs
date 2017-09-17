@@ -63,6 +63,8 @@ namespace Concurrency
         [InlineData(true)]
         public Task<int>[] FirstConsumerQueueTest(bool needWait = true)
         {
+            SeeMemoryInfo = true;
+
             var result = FirstProducerQueueTest(false);
 
             int consumerCount = 3;
@@ -237,9 +239,235 @@ namespace Concurrency
             var dic = new ConcurrentDictionary<int, int>();
         }
 
+        [Fact]
         public void BlockingCollectionTest()
         {
+            SeeMemoryInfo = true;
+
+            int depotCapacity = 100;
+            int total = 10000 + 1;
+            int producerCount = 5;
+
+            var depot = new BlockingCollection<int>(depotCapacity);
+            var bakery = new BlockingCollection<int>();
+
+            var producer = Task.Run(() =>
+            {
+                return Parallel.ForEach(Partitioner.Create(1, total),
+                    new ParallelOptions() { MaxDegreeOfParallelism = producerCount },
+                    tuple =>
+                    {
+                        int sum = 0;
+                        for (int i = tuple.Item1; i < tuple.Item2; i++)
+                        {
+                            var count = i % 10 + 1;
+                            sum += count;
+                            depot.Add(count);
+                        }
+
+                        Trace.WriteLine($"range: {tuple.Item1} to {tuple.Item2}, produce {sum} flour.");
+                    });
+            });
+
+            producer.ContinueWith(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    while (!task.Result.IsCompleted)
+                    {
+                        SpinWait.SpinUntil(() => false, 10);
+                    }
+
+                    depot.CompleteAdding();
+                }
+            });
+
+            var consumers = new Task<int>[3];
+            for (int i = 0; i < consumers.Length; i++)
+            {
+                var index = i;
+                consumers[i] = Task.Factory.StartNew(() =>
+                {
+                    int current = 0;
+                    foreach (var flour in depot.GetConsumingEnumerable())
+                    {
+                        current += flour;
+
+                        //produce 1 bread cost 10 flour
+                        if (current >= 10)
+                        {
+                            bakery.Add(current / 10);
+                            current %= 10;
+                        }
+                    }
+
+                    Trace.WriteLine($"{index} task has {current} flour.");
+                    return current;
+                });
+            }
+
+            try
+            {
+                Task.WaitAll(consumers);
+            }
+            catch (AggregateException ex)
+            {
+                throw;
+            }
+
+            Trace.WriteLine($"has {bakery.Sum()} breads.");
+        }
+
+        [Fact]
+        public void BlockingCollectionCancelTest()
+        {
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+
             var block = new BlockingCollection<int>();
+
+            var producer = Task.Factory.StartNew(() =>
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    //token.ThrowIfCancellationRequested();
+
+                    try
+                    {
+                        if (!block.TryAdd(1, 2000, token))
+                        {
+                            throw new TimeoutException();
+                        }
+
+                        Thread.Sleep(1);
+                    }
+                    catch (OperationCanceledException ex)
+                    {
+                        Trace.WriteLine("producer to cancel add operation.");
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Trace.WriteLine("producer time out.");
+                    }
+                }
+
+                block.CompleteAdding();
+                Trace.WriteLine("producer was completed.");
+            }, token);
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(1000);
+                tokenSource.Cancel();
+            });
+
+            var consumer = Task.Factory.StartNew(() =>
+            {
+                var count = 0;
+                try
+                {
+                    foreach (var i in block.GetConsumingEnumerable(token))
+                    {
+                        count++;
+                        Thread.Sleep(2);
+                    }
+
+                    Trace.WriteLine("consumer was completed.");
+                }
+                catch (OperationCanceledException ex)
+                {
+                    Trace.WriteLine("consumer was canceled.");
+                }
+                finally
+                {
+                    Trace.WriteLine($"consumer use {count}.");
+                }
+            }, token);
+
+            try
+            {
+                Task.WaitAll(producer, consumer);
+            }
+            catch (AggregateException ex)
+            {
+                foreach (var innerExceptions in ex.InnerExceptions)
+                {
+                    Trace.WriteLine(innerExceptions.Message);
+                }
+            }
+
+            Trace.WriteLine($"BlockingCollection surplus count: {block.Count}");
+        }
+
+        /// <summary>
+        /// 使用多个阻塞集合存储
+        /// </summary>
+        [Fact]
+        public void BlockingCollectionAddToAnyTest()
+        {
+            var depots = new BlockingCollection<int>[5];
+            for (int i = 0; i < depots.Length; i++)
+            {
+                depots[i] = new BlockingCollection<int>(10);
+            }
+
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+
+            var times = 100;
+            var writeTask = Task.Factory.StartNew(() =>
+            {
+                for (int i = 0; i < times; i++)
+                {
+                    try
+                    {
+                        var timeout = 1;
+                        var index = BlockingCollection<int>.TryAddToAny(depots, i, timeout, token);
+                        if (index < 0)
+                        {
+                            Trace.WriteLine($"time out. item: {i}");
+                            Thread.Sleep(1);
+                        }
+                        else
+                        {
+                            Trace.WriteLine($"index: {index}, insert item: {i}");
+                        }
+                    }
+                    catch (OperationCanceledException ex)
+                    {
+                        Trace.WriteLine("operation was canceled.");
+                        break;
+                    }
+                }
+
+                foreach (var blockingCollection in depots)
+                {
+                    blockingCollection.CompleteAdding();
+                }
+            }, token);
+
+            var readTask = Task.Factory.StartNew(() =>
+            {
+                while (!token.IsCancellationRequested && depots.All(o => !o.IsCompleted))
+                {
+                    int value;
+                    BlockingCollection<int>.TakeFromAny(depots, out value);
+                    Trace.WriteLine($"get item: {value}");
+                    Thread.Sleep(1);
+                }
+            }, token);
+
+            try
+            {
+                Task.WaitAll(writeTask, readTask);
+            }
+            catch (AggregateException ex)
+            {
+                foreach (var innerException in ex.InnerExceptions)
+                {
+                    Trace.WriteLine(innerException.Message);
+                }
+            }
         }
     }
 }

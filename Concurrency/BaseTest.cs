@@ -6,7 +6,9 @@ namespace Concurrency
 {
     public abstract class BaseTest : IDisposable
     {
-        private Stopwatch _timmer;
+        private readonly Stopwatch _timmer;
+
+        protected bool SeeMemoryInfo { get; set; }
 
         protected BaseTest()
         {
@@ -21,6 +23,12 @@ namespace Concurrency
         {
             _timmer.Stop();
             Trace.WriteLine(_timmer.Elapsed);
+
+            if (SeeMemoryInfo)
+            {
+                GetMemoryInfo();
+            }
+
             FileTraceListener.WriteLog();
         }
 
@@ -30,6 +38,18 @@ namespace Concurrency
             Console.ReadLine();
 
             Program3.Exit();
+        }
+
+        private void GetMemoryInfo()
+        {
+            var process = Process.GetCurrentProcess();
+
+            PerformanceCounter pf1 = new PerformanceCounter("Process", "Working Set - Private", process.ProcessName);
+            PerformanceCounter pf2 = new PerformanceCounter("Process", "Working Set", process.ProcessName);
+            Trace.WriteLine($"{process.ProcessName}:工作集(进程类)  {process.WorkingSet64 / 1024,12:N3} KB");
+            Trace.WriteLine($"{process.ProcessName}:工作集          {pf2.NextValue() / 1024,12:N3} KB");
+            //私有工作集
+            Trace.WriteLine($"{process.ProcessName}:专用工作集      {pf1.NextValue() / 1024,12:N3} KB");
         }
     }
 }

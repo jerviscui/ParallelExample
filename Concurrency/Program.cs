@@ -27,7 +27,7 @@ namespace Concurrency
         {
             using (var test = new ParallelCollectionTest())
             {
-                test.FirstConsumerQueueTest();
+                test.BlockingCollectionTest();
             }
         }
 
