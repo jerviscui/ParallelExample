@@ -469,5 +469,12 @@ namespace Concurrency
                 }
             }
         }
+
+        public void ConcurrentDictionaryTest()
+        {
+            var dictionary = new ConcurrentDictionary<int, int>();
+
+            //dictionary.AddOrUpdate()
+        }
     }
 }
