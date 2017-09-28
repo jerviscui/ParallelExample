@@ -470,11 +470,62 @@ namespace Concurrency
             }
         }
 
+        [Fact]
         public void ConcurrentDictionaryTest()
         {
-            var dictionary = new ConcurrentDictionary<int, int>();
+            var dictionary = new ConcurrentDictionary<string, Item>();
 
-            //dictionary.AddOrUpdate()
+            var tasks = new Task[3];
+
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = new Task(() => dictionary.AddOrUpdate("item1",
+                    s => new Item("a"),
+                    (s, item) =>
+                    {
+                        Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId} : check name.");
+                        if (item.Name == "a")
+                        {
+                            lock (item)
+                            {
+                                if (item.Name == "a")
+                                {
+                                    Thread.Sleep(100);
+                                    item.Name = "b";
+                                    Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId} : update complete.");
+                                }
+                            }
+                        }
+                        return item;
+                    }));
+            }
+
+            tasks[0].Start();
+
+            Thread.Sleep(100);
+
+            tasks[1].Start();
+            tasks[2].Start();
+
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch (AggregateException ex)
+            {
+                throw;
+            }
+        }
+
+        private class Item
+        {
+            public string Name { get; set; }
+
+            /// <summary>初始化 <see cref="T:System.Object" /> 类的新实例。</summary>
+            public Item(string name)
+            {
+                Name = name;
+            }
         }
     }
 }
