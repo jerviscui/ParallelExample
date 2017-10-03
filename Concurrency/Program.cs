@@ -25,9 +25,9 @@ namespace Concurrency
 
         static async Task MainAsync(string[] args)
         {
-            using (var test = new ParallelCollectionTest())
+            using (var test = new SynchronizationTest())
             {
-                test.BlockingCollectionTest();
+                test.BarrierExceptionTest();
             }
         }
 
