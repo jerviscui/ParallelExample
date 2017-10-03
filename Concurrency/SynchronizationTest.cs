@@ -193,7 +193,7 @@ namespace Concurrency
                 //innerException is AggregateException
                 foreach (var exception in ex.InnerExceptions)
                 {
-                    var innerException = (AggregateException) exception;
+                    var innerException = (AggregateException)exception;
                     foreach (var aggregateInner in innerException.InnerExceptions)
                     {
                         Trace.WriteLine(aggregateInner.Message);
@@ -203,6 +203,110 @@ namespace Concurrency
             finally
             {
                 barrier.Dispose();
+            }
+        }
+
+        [Fact]
+        public void MonitorTest()
+        {
+            var lockObj = new object();
+
+            var tasks = new Task[3];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    Trace.WriteLine($"parallel execution. #{Thread.CurrentThread.ManagedThreadId,-4} {DateTime.Now.Ticks,19}");
+
+                    bool lockTaken = false;
+                    try
+                    {
+                        Monitor.Enter(lockObj, ref lockTaken);
+
+                        Thread.Sleep(50);
+                        Trace.WriteLine($"serial execution. #{Thread.CurrentThread.ManagedThreadId,-4} {DateTime.Now.Ticks,19}");
+                    }
+                    finally
+                    {
+                        if (lockTaken)
+                        {
+                            Monitor.Exit(lockObj);
+                        }
+                    }
+                });
+            }
+
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public void MonitorTimeoutTest()
+        {
+            var lockObj = new object();
+
+            bool lockTaken = false;
+            try
+            {
+                Monitor.TryEnter(lockObj, 500, ref lockTaken);
+
+                if (!lockTaken)
+                {
+                    throw new TimeoutException("lock timeout.");
+                }
+                Thread.Sleep(50);
+                Trace.WriteLine($"serial execution. #{Thread.CurrentThread.ManagedThreadId,-4} {DateTime.Now.Ticks,19}");
+            }
+            finally
+            {
+                if (lockTaken)
+                {
+                    Monitor.Exit(lockObj);
+                }
+            }
+        }
+
+        [Fact]
+        public void SpinLockTest()
+        {
+            var spinLock = new SpinLock(false);
+
+            var tasks = new Task[3];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    Trace.WriteLine($"parallel execution. #{Thread.CurrentThread.ManagedThreadId,-4} {DateTime.Now.Ticks,19}");
+
+                    bool lockTaken = false;
+                    try
+                    {
+                        spinLock.Enter(ref lockTaken);
+                        Thread.Sleep(10);
+                        Trace.WriteLine($"serial execution. #{Thread.CurrentThread.ManagedThreadId,-4} {DateTime.Now.Ticks,19}");
+                    }
+                    finally
+                    {
+                        if (lockTaken)
+                        {
+                            spinLock.Exit();
+                        }
+                    }
+                });
+            }
+
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
     }
