@@ -315,34 +315,5 @@ namespace Concurrency
             var wait = new SpinWait();
         }
 
-        [Fact]
-        public void ManualResetEventSlimTest()
-        {
-            var manualReset = new ManualResetEventSlim(false, 100);
-
-            var task1 = Task.Factory.StartNew(() =>
-            {
-                manualReset.Wait();
-
-                Trace.WriteLine("signal was seted.");
-                Trace.WriteLine("task1 is running.");
-            });
-
-            var task2 = Task.Factory.StartNew(() =>
-            {
-                Trace.WriteLine("task2 is running.");
-
-                manualReset.Set();
-            });
-
-            try
-            {
-                Task.WaitAll(task1, task2);
-            }
-            finally 
-            {
-                manualReset.Dispose();
-            }
-        }
     }
 }
