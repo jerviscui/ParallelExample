@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -193,7 +195,7 @@ namespace Concurrency
                 //innerException is AggregateException
                 foreach (var exception in ex.InnerExceptions)
                 {
-                    var innerException = (AggregateException) exception;
+                    var innerException = (AggregateException)exception;
                     foreach (var aggregateInner in innerException.InnerExceptions)
                     {
                         Trace.WriteLine(aggregateInner.Message);
@@ -203,6 +205,143 @@ namespace Concurrency
             finally
             {
                 barrier.Dispose();
+            }
+        }
+
+        [Fact]
+        public void SemaphoreSlimTest()
+        {
+            var semaphore = new SemaphoreSlim(5);
+
+            var tasks = new Task[Environment.ProcessorCount];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        semaphore.Wait();
+
+                        Trace.WriteLine($"thread#{Thread.CurrentThread.ManagedThreadId} {j}th enter. avaliable count: {semaphore.CurrentCount}");
+                        Thread.Sleep(100);
+
+                        semaphore.Release();
+                        Trace.WriteLine($"thread#{Thread.CurrentThread.ManagedThreadId} {j}th leave. avaliable count: {semaphore.CurrentCount}");
+                    }
+                });
+            }
+
+            var lastest = Task.Factory.ContinueWhenAll(tasks, tasks1 =>
+                {
+                    Task.WaitAll(tasks1);
+                    Trace.WriteLine("all tasks were compleated.");
+                });
+
+            try
+            {
+                lastest.Wait();
+            }
+            finally
+            {
+                semaphore.Dispose();
+            }
+        }
+
+
+        private volatile int count;
+        [Fact]
+        public void SemaphoreTest()
+        {
+            var semaphore = new Semaphore(3, 5);
+            var queue = new ConcurrentDictionary<string, DateTime>();
+
+            var tasks = new Task[Environment.ProcessorCount];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        var cur = DateTime.Now;
+                        queue.TryAdd($"thread#{Thread.CurrentThread.ManagedThreadId} {j}th wait. count:{count} {cur.ToString("HH:mm:ss.fff")}", cur);
+
+                        semaphore.WaitOne();
+
+                        count -= 1;
+                        cur = DateTime.Now;
+                        queue.TryAdd($"thread#{Thread.CurrentThread.ManagedThreadId} {j}th enter. count:{count} {cur.ToString("HH:mm:ss.fff")}", cur);
+
+                        Thread.Sleep(j == 0 ? 3000 : 3000);
+
+                        semaphore.Release();
+
+                        count += 1;
+                        cur = DateTime.Now;
+                        queue.TryAdd($"thread#{Thread.CurrentThread.ManagedThreadId} {j}th leave. count:{count} {cur.ToString("HH:mm:ss.fff")}", cur);
+                    }
+                });
+            }
+
+            var lastest = Task.Factory.ContinueWhenAll(tasks, tasks1 =>
+                {
+                    Task.WaitAll(tasks1);
+
+                    foreach (var keyValuePair in queue.OrderBy(o => o.Value))
+                    {
+                        Trace.WriteLine(keyValuePair.Key);
+                    }
+
+                    Trace.WriteLine("all tasks were compleated.");
+                    Trace.WriteLine($"count: {count}");
+                });
+
+            try
+            {
+                lastest.Wait();
+            }
+            finally
+            {
+                semaphore.Dispose();
+            }
+        }
+
+        [Fact]
+        public void CountdownEventTest()
+        {
+            var count = Environment.ProcessorCount;
+            var countdown = new CountdownEvent(count);
+
+            var tasks = new Task[count];
+
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        Thread.Sleep(100);
+
+                        throw new Exception("catch this without Task.WaitAll() ?");
+                    }
+                    finally
+                    {
+                        countdown.Signal();
+                        Trace.WriteLine($"Thread#{Thread.CurrentThread.ManagedThreadId} was completed. CurrentCount: {countdown.CurrentCount}");
+                    }
+                });
+            }
+
+            try
+            {
+                countdown.Wait();
+
+                Task.WaitAll(tasks);
+
+                Trace.WriteLine("all tasks over.");
+            }
+            finally
+            {
+                countdown.Dispose();   
             }
         }
     }

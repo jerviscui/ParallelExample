@@ -37,7 +37,8 @@ namespace Concurrency
         {
             if (!Messages.IsEmpty)
             {
-                File.WriteAllLines(Path.GetFullPath(_fileName), Messages.ToArray().OrderBy(o => o.CurTime).Select(o => o.Content));
+                File.WriteAllLines(Path.GetFullPath(_fileName), 
+                    Messages.ToArray().OrderBy(o => o.CurTime).Select(o => o.Content));
             }
         }
     }
