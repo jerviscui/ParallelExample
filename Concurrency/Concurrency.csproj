@@ -95,6 +95,7 @@
     <Compile Include="ParallelCollectionTest.cs" />
     <Compile Include="ParallelForeachAndPartitionerTest.cs" />
     <Compile Include="ParallelForeachTest.cs" />
+    <Compile Include="ParallelLinqTest.cs" />
     <Compile Include="Program3.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -102,7 +103,9 @@
     <Compile Include="TaskTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

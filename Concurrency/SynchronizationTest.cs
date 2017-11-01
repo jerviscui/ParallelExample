@@ -444,6 +444,9 @@ namespace Concurrency
             }
         }
 
+        /// <summary>
+        /// Countdowns 轻量级同步原语，信号计数
+        /// </summary>
         [Fact]
         public void CountdownEventTest()
         {
@@ -474,6 +477,7 @@ namespace Concurrency
             {
                 countdown.Wait();
 
+                //catch tasks exceptions
                 Task.WaitAll(tasks);
 
                 Trace.WriteLine("all tasks over.");
