@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -94,7 +95,7 @@ namespace Concurrency
             {
                 list2 = query2.ToList();
             }
-            
+
             Trace.WriteLine($"plinq: {watch.Elapsed}");
         }
 
@@ -171,6 +172,83 @@ namespace Concurrency
             }
 
             Trace.WriteLine($"plinq: {watch.Elapsed}");
+        }
+
+        /// <summary>
+        /// 归约操作并行操作需要使用并行数据源
+        /// </summary>
+        [Fact]
+        public void ReducedOperationTest()
+        {
+            int count = 500000000;
+
+            var list = Enumerable.Range(1, count);
+            var average = (from i in list
+                           where i % 5 == 0
+                           select i / Math.PI).Sum();
+
+            Trace.WriteLine(average);
+
+            var paraList = ParallelEnumerable.Range(1, count);
+            var paraAverage = (from i in paraList.AsParallel()
+                               where i % 5 == 0
+                               select i / Math.PI).Sum();
+
+            Trace.WriteLine(paraAverage);
+
+            var average3 = (from i in list.AsParallel()
+                            where i % 5 == 0
+                            select i / Math.PI).Sum();
+
+            Trace.WriteLine(average3);
+        }
+
+        [Fact]
+        public void CancellationTest()
+        {
+            int count = 500000000;
+
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+
+            var paraList = ParallelEnumerable.Range(1, count);
+            var paraAverage = (from i in paraList.AsParallel().WithCancellation(token)
+                               where i % 5 == 0
+                               select i / Math.PI).Sum();
+
+            Trace.WriteLine(paraAverage);
+        }
+
+        [Fact]
+        public void ForAllTest()
+        {
+            int count = 500000000;
+            
+            var bag = new ConcurrentBag<double>();
+            var list = new List<double>();
+
+            var paraList = ParallelEnumerable.Range(1, count);
+            var parallQuery = (from i in paraList.AsParallel()
+                               where i % 5 == 0
+                               select i / Math.PI);
+
+            var parallQuery2 = (from i in paraList.AsParallel()
+                               where i % 5 == 0
+                               select i / Math.PI);
+
+            var watch = Stopwatch.StartNew();
+
+            parallQuery2.ForAll(d => bag.Add(d));
+            Trace.WriteLine(watch.Elapsed);
+
+            watch.Restart();
+            foreach (var d in parallQuery)
+            {
+                list.Add(d);
+            }
+            Trace.WriteLine(watch.Elapsed);
+
+            Trace.WriteLine(bag.Count());
         }
     }
 }
