@@ -61,7 +61,9 @@ namespace Concurrency
             "2isolation",
             "2durability",
             "2interactive",
-            "2stuff"
+            "2stuff",
+            "1reduce","1likewise","1related","1retrieved","1adjust","1case insensitive","1insensitive","1term","1visible","1latex",
+            "1orthogonal","1specified","1manual","1obtain","1angular","1cotained","1retrieval","1slice","1remote","1technique"
         };
 
         /// <summary>
@@ -172,6 +174,48 @@ namespace Concurrency
             }
 
             Trace.WriteLine($"plinq: {watch.Elapsed}");
+        }
+
+        [Fact]
+        public void ParallelMergeTest()
+        {
+            var watch = Stopwatch.StartNew();
+            int count = 1000000000;
+            var paraList = ParallelEnumerable.Range(1, count);
+
+            //var query1 = from word in paraList.AsParallel()
+            //                 //.WithMergeOptions(ParallelMergeOptions.NotBuffered)
+            //             where (word * 2 + 1) % 5 != 0 && word % 2 == 0
+            //             select word;
+
+            var query2 = from word in Words.AsParallel()
+                         .WithMergeOptions(ParallelMergeOptions.NotBuffered)
+                         where word.Contains("a") && (word.Contains("b") && word.Contains("d")) && !word.Contains("1")
+                         select word;
+
+
+            Trace.WriteLine($"{query2.ElementAt(0)}");
+            Trace.WriteLine($"plinq: {watch.Elapsed}");
+            var list = query2.ToList();
+            Trace.WriteLine($"{watch.Elapsed}");
+        }
+
+        /// <summary>
+        /// 以映射规约架构执行
+        /// </summary>
+        [Fact]
+        public void MapReduceTest()
+        {
+            var map = Words.AsParallel().ToLookup(s => s, o => 1);
+
+            var query = from item in map.AsParallel()
+                        where item.Count() > 1
+                        select item;
+
+            foreach (var item in query)
+            {
+                Trace.WriteLine($"{item.Key}, count:{item.Count()}");
+            }
         }
 
         /// <summary>
