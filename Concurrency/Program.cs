@@ -25,9 +25,9 @@ namespace Concurrency
 
         static async Task MainAsync(string[] args)
         {
-            using (var test = new ParallelLinqTest())
+            using (var test = new TestForDebug())
             {
-                test.ParallelMergeTest();
+                test.Test();
             }
         }
 
