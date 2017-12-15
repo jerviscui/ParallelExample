@@ -15,25 +15,28 @@ namespace Concurrency
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
-            var task = new Task(() =>
+            var tasks = new Task[8];
+            for (int i = 0; i < 8; i++)
             {
-                Trace.WriteLine("start");
-
-                for (int i = 0; i < 10; i++)
+                var i1 = i;
+                tasks[i] = Task.Factory.StartNew(() =>
                 {
-                    Thread.Sleep(100);
-                }
-            });
+                    Trace.WriteLine($"{i1}: {Thread.CurrentThread.ManagedThreadId} start");
 
-            task.Start();
+                    Thread.Sleep(100);
+                }, token);
+            }
 
             try
             {
-                task.Wait();
+                Task.WaitAll(tasks);
             }
-            catch (Exception ex)
+            catch (AggregateException ex)
             {
-                Trace.WriteLine(ex.Message);
+                foreach (var inner in ex.InnerExceptions)
+                {
+                    Trace.WriteLine(inner.Message);
+                }
             }
         }
     }
