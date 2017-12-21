@@ -27,7 +27,7 @@ namespace Concurrency
         {
             using (var test = new TestForDebug())
             {
-                test.Test();
+                test.DeadlockTest();
             }
         }
 

@@ -39,5 +39,54 @@ namespace Concurrency
                 }
             }
         }
+
+        private static object _lockOjb1 = new object();
+        private static object _lockOjb2 = new object();
+
+        public void DeadlockTest()
+        {
+            int count1 = 0;
+            int count2 = 0;
+
+            var task1 = Task.Factory.StartNew(() =>
+            {
+                lock (_lockOjb1)
+                {
+                    count1++;
+                    Thread.Sleep(5000);
+
+                    lock (_lockOjb2)
+                    {
+                        count2++;
+                    }
+                }
+            });
+
+            var task2 = Task.Factory.StartNew(() =>
+            {
+                lock (_lockOjb2)
+                {
+                    count2++;
+                    Thread.Sleep(5000);
+
+                    lock (_lockOjb1)
+                    {
+                        count1++;
+                    }
+                }
+            });
+
+            try
+            {
+                Task.WaitAll(task1, task2);
+            }
+            catch (AggregateException ex)
+            {
+                foreach (var innerException in ex.InnerExceptions)
+                {
+                    Trace.WriteLine(innerException.Message);
+                }
+            }
+        }
     }
 }
