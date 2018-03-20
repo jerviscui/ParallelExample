@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Concurrency", "Concurrency\Concurrency.csproj", "{00B33747-2C20-4EC5-A2F4-EBDBA21897BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp", "WpfApp\WpfApp.csproj", "{D53194DC-08D8-4116-BB16-CE09BD8B64AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{00B33747-2C20-4EC5-A2F4-EBDBA21897BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00B33747-2C20-4EC5-A2F4-EBDBA21897BE}.Release|Any CPU.ActiveCfg = Release|x64
 		{00B33747-2C20-4EC5-A2F4-EBDBA21897BE}.Release|Any CPU.Build.0 = Release|x64
+		{D53194DC-08D8-4116-BB16-CE09BD8B64AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D53194DC-08D8-4116-BB16-CE09BD8B64AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D53194DC-08D8-4116-BB16-CE09BD8B64AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D53194DC-08D8-4116-BB16-CE09BD8B64AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {131CBBBD-B0CB-4AE1-A465-B797D94AA9B1}
 	EndGlobalSection
 EndGlobal
