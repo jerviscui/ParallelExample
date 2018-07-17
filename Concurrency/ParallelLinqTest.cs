@@ -67,7 +67,7 @@ namespace Concurrency
         };
 
         /// <summary>
-        /// 以并行方式运行消耗更多时间的原因是？
+        /// 以并行方式运行消耗更多时间的原因是？线程调度的开销，但是提高了系统的利用率
         /// </summary>
         [Fact]
         public void AsParallelTest()
@@ -267,7 +267,7 @@ namespace Concurrency
         public void ForAllTest()
         {
             int count = 500000000;
-            
+
             var bag = new ConcurrentBag<double>();
             var list = new List<double>();
 
@@ -277,8 +277,8 @@ namespace Concurrency
                                select i / Math.PI);
 
             var parallQuery2 = (from i in paraList.AsParallel()
-                               where i % 5 == 0
-                               select i / Math.PI);
+                                where i % 5 == 0
+                                select i / Math.PI);
 
             var watch = Stopwatch.StartNew();
 
@@ -286,10 +286,11 @@ namespace Concurrency
             Trace.WriteLine(watch.Elapsed);
 
             watch.Restart();
-            foreach (var d in parallQuery)
-            {
-                list.Add(d);
-            }
+            var toList = parallQuery.ToList();
+            //foreach (var d in parallQuery)
+            //{
+            //    list.Add(d);
+            //}
             Trace.WriteLine(watch.Elapsed);
 
             Trace.WriteLine(bag.Count());
