@@ -45,7 +45,7 @@ namespace WpfApp
         private void BtnConcate_Click(object sender, RoutedEventArgs e)
         {
             //.../bin/Debug/
-            var dir = System.AppDomain.CurrentDomain.BaseDirectory;
+            var dir = Environment.CurrentDirectory; //System.AppDomain.CurrentDomain.BaseDirectory;
 
             //.../
             var projDir = Directory.GetParent(dir.TrimEnd('\\'))?.Parent?.FullName;
