@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button Content="Concatenate" Height="43" Margin="12, 12, 0, 0" Name="BtnConcate" Width="190" Click="BtnConcate_Click"></Button>
+        <Button Content="Concatenate" Height="43" Margin="10,10,318.038,266.698" Name="BtnConcate" Width="190" Click="BtnConcate_Click"></Button>
+        <Button Content="UnblockUI" Height="43" Name="BtnUnblock" Width="190" Margin="10,58,318.038,218.698" Click="BtnUnblock_Click"></Button>
     </Grid>
 </Window>

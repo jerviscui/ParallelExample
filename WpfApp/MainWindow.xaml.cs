@@ -54,6 +54,11 @@ namespace WpfApp
                 throw new DirectoryNotFoundException();
             }
 
+            if (fileTasks.Any())
+            {
+                fileTasks.Clear();
+            }
+
             foreach (var fileName in _fileNames)
             {
                 fileTasks.Add(ReadAllTextAsync(Path.Combine(projDir, fileName)));
@@ -105,6 +110,39 @@ namespace WpfApp
 
                 return task1.Result > 0 ? new UTF8Encoding().GetString(data) : "";
             }, TaskContinuationOptions.ExecuteSynchronously);
+        }
+
+        private void BtnUnblock_Click(object sender, RoutedEventArgs e)
+        {
+            var dir = Environment.CurrentDirectory;
+
+            var projDir = Directory.GetParent(dir.TrimEnd('\\'))?.Parent?.FullName;
+            if (projDir == null)
+            {
+                throw new DirectoryNotFoundException();
+            }
+
+            if (fileTasks.Any())
+            {
+                fileTasks.Clear();
+            }
+
+            foreach (var fileName in _fileNames)
+            {
+                fileTasks.Add(ReadAllTextAsync(Path.Combine(projDir, fileName)));
+            }
+
+            //不阻塞 UI 线程，通过任务延续方式完成读取后的操作
+            Task.Factory.ContinueWhenAll(fileTasks.ToArray(), tasks =>
+            {
+                Task.WaitAll(tasks);
+
+                foreach (var task in tasks)
+                {
+                    //Console.WriteLine(task.Result);
+                    Console.WriteLine("==============");
+                }
+            });
         }
     }
 }
