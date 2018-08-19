@@ -61,7 +61,7 @@ namespace WpfApp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 #{0} task has read {1} bytes from {2}, {3}. 的本地化字符串。
+        ///   查找类似 #{0} task by thread {1} has read {2} bytes from {3}, {4}. 的本地化字符串。
         /// </summary>
         internal static string ReadAllTextAsync_Completed {
             get {

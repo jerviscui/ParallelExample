@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,15 +21,7 @@ namespace WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly string[] _fileNames = {
-            "file01.txt",
-            "file02.txt",
-            "file03.txt",
-            "file04.txt",
-            "file05.txt",
-            "file06.txt",
-            "file07.txt",
-            "file08.txt" };
+        
 
         private List<Task<string>> fileTasks;
         private const int BufferSize = 0x2000;
@@ -37,31 +30,23 @@ namespace WpfApp
         {
             InitializeComponent();
 
-            fileTasks = new List<Task<string>>(_fileNames.Length);
+            fileTasks = new List<Task<string>>(Common.FilesCount());
 
             this.Closed += (sender, args) => System.Environment.Exit(0);
         }
 
         private void BtnConcate_Click(object sender, RoutedEventArgs e)
         {
-            //.../bin/Debug/
-            var dir = Environment.CurrentDirectory; //System.AppDomain.CurrentDomain.BaseDirectory;
-
-            //.../
-            var projDir = Directory.GetParent(dir.TrimEnd('\\'))?.Parent?.FullName;
-            if (projDir == null)
-            {
-                throw new DirectoryNotFoundException();
-            }
+            
 
             if (fileTasks.Any())
             {
                 fileTasks.Clear();
             }
 
-            foreach (var fileName in _fileNames)
+            foreach (var fileName in Common.GetAllFiles())
             {
-                fileTasks.Add(ReadAllTextAsync(Path.Combine(projDir, fileName)));
+                fileTasks.Add(ReadAllTextAsync(fileName));
             }
 
             Task.WaitAll(fileTasks.ToArray());
@@ -106,7 +91,7 @@ namespace WpfApp
             return task.ContinueWith(task1 =>
             {
                 stream.Close();
-                Console.WriteLine(Properties.Resources.ReadAllTextAsync_Completed, task1.Id, task1.Result, stream.Name, DateTime.Now.ToString("HH:mm:ss.ffffff"));
+                Console.WriteLine(Properties.Resources.ReadAllTextAsync_Completed, task1.Id, Thread.CurrentThread.ManagedThreadId,  task1.Result, stream.Name, DateTime.Now.ToString("HH:mm:ss.ffffff"));
 
                 return task1.Result > 0 ? new UTF8Encoding().GetString(data) : "";
             }, TaskContinuationOptions.ExecuteSynchronously);
@@ -114,22 +99,14 @@ namespace WpfApp
 
         private void BtnUnblock_Click(object sender, RoutedEventArgs e)
         {
-            var dir = Environment.CurrentDirectory;
-
-            var projDir = Directory.GetParent(dir.TrimEnd('\\'))?.Parent?.FullName;
-            if (projDir == null)
-            {
-                throw new DirectoryNotFoundException();
-            }
-
             if (fileTasks.Any())
             {
                 fileTasks.Clear();
             }
 
-            foreach (var fileName in _fileNames)
+            foreach (var fileName in Common.GetAllFiles())
             {
-                fileTasks.Add(ReadAllTextAsync(Path.Combine(projDir, fileName)));
+                fileTasks.Add(ReadAllTextAsync(fileName));
             }
 
             //不阻塞 UI 线程，通过任务延续方式完成读取后的操作
